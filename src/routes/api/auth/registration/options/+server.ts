@@ -1,19 +1,21 @@
 import { generateRegistrationOptions } from '@simplewebauthn/server';
 import type { RequestHandler } from './$types';
 import { rpID, rpName } from "$lib/relying-party";
-import { getUser, updateUser } from "$lib/users";
+import { addUser, updateUser, type IUser, connectDB } from "$lib/users";
 
 // Registration options are requested by the browser so that they can be
 // passed along to the user's authenticator (i.e. a browser or 1password).
 //
 // The options dictate what type of response that an authenticator device will
 // return back to the server for verification and saving, if successfully verified.
-export const GET: RequestHandler = async (event) => {
-  const user = await getUser();
+export const GET: RequestHandler = async () => {
+  await connectDB();
+  const user = await addUser("test") as IUser;
+
   const options = await generateRegistrationOptions({
     rpName,
     rpID,
-    userID: user.id,
+    userID: user.username,
     userName: user.username,
     timeout: 60000,
     // Don't prompt users for additional information about the authenticator
@@ -39,7 +41,7 @@ export const GET: RequestHandler = async (event) => {
   // replay attacks. This ensures that when we verify any registration response
   // from the user, we can validate it's for the most recent registration attempt.
   user.currentChallenge = options.challenge;
-  await updateUser(user.id, user);
+  await updateUser(user);
 
   return new Response(JSON.stringify(options), {
     headers: {

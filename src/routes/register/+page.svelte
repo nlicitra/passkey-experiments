@@ -14,10 +14,10 @@
     console.log(options);
 
     try {
-      const reg = await startRegistration(options);
-      console.log(reg);
+      const registration = await startRegistration(options);
+      console.log(registration);
 
-      const { verified } = await verifyRegistration(reg);
+      const { verified } = await verifyRegistration(registration);
       console.log(verified);
     } catch (e) {
       console.log(e);
@@ -45,7 +45,7 @@
   <form on:submit={onSubmit}>
     <label for="username">username</label>
     <input type="text" name="username" autocomplete="username webauthn" />
-    <button>Log In</button>
+    <button>Register</button>
   </form>
   {#if error}
     <div class="error">{error}</div>

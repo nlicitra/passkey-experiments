@@ -4,6 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
+		"db": "./db.sh",
 		"build": "vite build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -22,6 +23,7 @@
 	"type": "module",
 	"dependencies": {
 		"@simplewebauthn/browser": "^8.3.4",
-		"@simplewebauthn/server": "^8.3.5"
+		"@simplewebauthn/server": "^8.3.5",
+		"mongoose": "^8.0.1"
 	}
 }
