@@ -1,7 +1,7 @@
 import { generateRegistrationOptions } from '@simplewebauthn/server';
 import type { RequestHandler } from './$types';
 import { rpID, rpName } from "$lib/relying-party";
-import { addUser, updateUser, type IUser, connectDB } from "$lib/users";
+import { addUser, updateUser, type IUser } from "$lib/users";
 
 // Registration options are requested by the browser so that they can be
 // passed along to the user's authenticator (i.e. a browser or 1password).
@@ -9,7 +9,6 @@ import { addUser, updateUser, type IUser, connectDB } from "$lib/users";
 // The options dictate what type of response that an authenticator device will
 // return back to the server for verification and saving, if successfully verified.
 export const GET: RequestHandler = async () => {
-  await connectDB();
   const user = await addUser("test") as IUser;
 
   const options = await generateRegistrationOptions({

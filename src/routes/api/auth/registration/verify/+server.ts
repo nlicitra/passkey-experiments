@@ -3,7 +3,7 @@ import { verifyRegistrationResponse } from '@simplewebauthn/server';
 import type { AuthenticatorDevice, RegistrationResponseJSON } from '@simplewebauthn/typescript-types';
 import type { RequestHandler } from './$types';
 import { rpID, origin as rpOrigin } from "$lib/relying-party";
-import { getUser, updateUser, connectDB } from "$lib/users";
+import { getUser, updateUser } from "$lib/users";
 import { isoUint8Array } from '@simplewebauthn/server/helpers';
 
 // Verification happens after a user's device generations a registration response
@@ -12,7 +12,6 @@ import { isoUint8Array } from '@simplewebauthn/server/helpers';
 
 export const POST: RequestHandler = async (event) => {
   const body: RegistrationResponseJSON = await event.request.json();
-  await connectDB();
   const user = await getUser("test");
 
   if (!user) {
@@ -32,8 +31,8 @@ export const POST: RequestHandler = async (event) => {
     expectedRPID: rpID, // this can also be an array
   });
 
-  console.log(verified);
-  console.log(registrationInfo);
+  // console.log(verified);
+  // console.log(registrationInfo);
 
   if (verified && registrationInfo) {
     const {
@@ -56,6 +55,7 @@ export const POST: RequestHandler = async (event) => {
       }
       user.devices.push(newDevice);
       await updateUser(user);
+      await getUser(user.username);
     }
   }
 
