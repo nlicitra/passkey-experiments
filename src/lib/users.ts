@@ -1,10 +1,10 @@
 import { Table } from "sst/node/table";
 import { randomUUID } from "crypto";
 import { DynamoDBClient, PutItemCommand, GetItemCommand, UpdateItemCommand } from "@aws-sdk/client-dynamodb";
-import type { AuthenticatorDevice } from '@simplewebauthn/typescript-types';
+import type { AuthenticatorDevice } from "@simplewebauthn/typescript-types";
 
 export interface IUser {
-  id: string,
+  id: string;
   username: string;
   devices: AuthenticatorDevice[];
   currentChallenge?: string;
@@ -18,12 +18,12 @@ export async function addUser(username: string): Promise<IUser> {
     TableName: Table.Users.tableName,
     Item: {
       id: {
-        "S": id,
+        S: id,
       },
       username: {
-        "S": username,
-      }
-    }
+        S: username,
+      },
+    },
   });
   await ddbClient.send(command);
   return {
@@ -31,7 +31,7 @@ export async function addUser(username: string): Promise<IUser> {
     username,
     devices: [],
     currentChallenge: undefined,
-  }
+  };
 }
 
 export async function updateUser(user: IUser): Promise<void> {
@@ -39,28 +39,29 @@ export async function updateUser(user: IUser): Promise<void> {
     TableName: Table.Users.tableName,
     ExpressionAttributeNames: {
       "#CC": "currentChallenge",
-      "#D": "devices"
+      "#D": "devices",
     },
     ExpressionAttributeValues: {
+      //@ts-ignore
       ":c": {
-        "S": user.currentChallenge,
+        S: user.currentChallenge,
       },
       ":d": {
-        "L": user.devices.map(d => ({ "S": marshallDevice(d) })),
+        L: user.devices.map((d) => ({ S: marshallDevice(d) })),
       },
     },
     UpdateExpression: "SET #CC = :c, #D = :d",
     Key: {
       username: {
-        "S": user.username
-      }
-    }
-  })
+        S: user.username,
+      },
+    },
+  });
   await ddbClient.send(command);
 }
 
 function marshallDevice(device: AuthenticatorDevice): string {
-  const _device = { ...device };
+  const _device: any = { ...device };
   _device.credentialPublicKey = Array.from(device.credentialPublicKey);
   _device.credentialID = Array.from(device.credentialID);
   return JSON.stringify(_device);
@@ -73,7 +74,7 @@ function unmarshallDevice(deviceStr: string): AuthenticatorDevice {
     credentialID: new Uint8Array(device.credentialID),
     counter: device.counter,
     transports: device.transports,
-  }
+  };
 }
 
 export async function getUser(username: string): Promise<IUser | null> {
@@ -81,17 +82,17 @@ export async function getUser(username: string): Promise<IUser | null> {
     TableName: Table.Users.tableName,
     Key: {
       username: {
-        "S": username
-      }
-    }
-  })
+        S: username,
+      },
+    },
+  });
   const response = await ddbClient.send(command);
   if (!response.Item) return null;
   const user = {
     id: response.Item.id.S!,
     username: response.Item.username.S!,
-    devices: response.Item.devices?.L.map(i => unmarshallDevice(i.S)),
+    devices: response.Item.devices?.L?.map((i) => unmarshallDevice(i.S!)) ?? [],
     currentChallenge: response.Item.currentChallenge?.S,
-  }
+  };
   return user;
 }

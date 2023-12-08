@@ -1,9 +1,9 @@
 <script lang="ts">
   import type {
-    PublicKeyCredentialCreationOptionsJSON,
-    RegistrationResponseJSON,
+    PublicKeyCredentialRequestOptionsJSON,
+    AuthenticationResponseJSON,
   } from "@simplewebauthn/typescript-types";
-  import { startRegistration } from "@simplewebauthn/browser";
+  import { startAuthentication } from "@simplewebauthn/browser";
   import { goto } from "$app/navigation";
   import { authStore } from "$lib/auth";
 
@@ -12,17 +12,17 @@
 
   async function onSubmit(event: SubmitEvent) {
     event.preventDefault();
+    const options = await getAuthenticationOptions(username);
 
     try {
-      const options = await getRegistrationOptions(username);
-      const registration = await startRegistration(options);
+      const auth = await startAuthentication(options);
 
-      const { verified } = await verifyRegistration(username, registration);
+      const { verified } = await verifyAuthentication(username, auth);
       authStore.set({ authenticated: verified });
       if (verified) {
         goto("/");
       } else {
-        error = "there was a problem registering.";
+        error = "Cannot verify your passkey";
       }
     } catch (e) {
       console.log(e);
@@ -30,13 +30,13 @@
     }
   }
 
-  async function verifyRegistration(
+  async function verifyAuthentication(
     username: string,
-    registration: RegistrationResponseJSON
+    authResponse: AuthenticationResponseJSON
   ): Promise<{ verified: boolean }> {
-    const resp = await fetch(`/api/${username}/registration/verify`, {
+    const resp = await fetch(`/api/${username}/authentication/verify`, {
       method: "POST",
-      body: JSON.stringify(registration),
+      body: JSON.stringify(authResponse),
     });
     const data = await resp.json();
     if (!resp.ok) {
@@ -45,13 +45,9 @@
     return data;
   }
 
-  async function getRegistrationOptions(username: string): Promise<PublicKeyCredentialCreationOptionsJSON> {
-    const resp = await fetch(`/api/${username}/registration/options`);
-    const data = await resp.json();
-    if (!resp.ok) {
-      throw Error(data.message);
-    }
-    return data;
+  async function getAuthenticationOptions(username: string): Promise<PublicKeyCredentialRequestOptionsJSON> {
+    const resp = await fetch(`/api/${username}/authentication/options`);
+    return resp.json();
   }
 </script>
 
@@ -59,7 +55,7 @@
   <form on:submit={onSubmit}>
     <label for="username">username</label>
     <input type="text" name="username" autocomplete="username webauthn" bind:value={username} />
-    <button>Register</button>
+    <button>Login</button>
   </form>
   {#if error}
     <div class="error">{error}</div>

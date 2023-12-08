@@ -1,54 +1,20 @@
 <script lang="ts">
-  import type {
-    PublicKeyCredentialCreationOptionsJSON,
-    RegistrationResponseJSON,
-  } from "@simplewebauthn/typescript-types";
-  import { startRegistration } from "@simplewebauthn/browser";
+  import { authStore } from "$lib/auth";
 
   let error: string | undefined;
-
-  async function onSubmit(event: SubmitEvent) {
-    event.preventDefault();
-    console.log(event);
-    const options = await getRegistrationOptions();
-    console.log(options);
-
-    try {
-      const reg = await startRegistration(options);
-      console.log(reg);
-
-      const { verified } = await verifyRegistration(reg);
-      console.log(verified);
-    } catch (e) {
-      console.log(e);
-      error = String(e);
-    }
-  }
-
-  async function verifyRegistration(
-    registration: RegistrationResponseJSON
-  ): Promise<{ verified: boolean }> {
-    const resp = await fetch("/api/auth/registration/verify", {
-      method: "POST",
-      body: JSON.stringify(registration),
-    });
-    return resp.json();
-  }
-
-  async function getRegistrationOptions(): Promise<PublicKeyCredentialCreationOptionsJSON> {
-    const resp = await fetch("/api/auth/registration/options");
-    return resp.json();
-  }
 </script>
 
 <main>
-  <form on:submit={onSubmit}>
-    <label for="username">username</label>
-    <input type="text" name="username" autocomplete="username webauthn" />
-    <button>Log In</button>
-  </form>
   {#if error}
     <div class="error">{error}</div>
+  {/if}
+  {#if $authStore.authenticated}
+    <div class="login-success">You are successfully logged in.</div>
+  {:else}
+    <div>
+      You are not authenticated. If this is your first time here, register your account, but if you're returning you can
+      just log in!
+    </div>
   {/if}
 </main>
 
@@ -64,15 +30,14 @@
     margin-top: 2rem;
   }
 
-  form {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  form > * {
+  .login-success {
+    background-color: mediumseagreen;
     font-size: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid black;
   }
 
   .error {

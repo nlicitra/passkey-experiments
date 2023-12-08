@@ -1,5 +1,6 @@
-import { generateAuthenticationOptions } from '@simplewebauthn/server';
-import type { RequestHandler } from './$types';
+import { error } from "@sveltejs/kit";
+import { generateAuthenticationOptions } from "@simplewebauthn/server";
+import type { RequestHandler } from "./$types";
 import { rpID, rpName } from "$lib/relying-party";
 import { getUser, updateUser } from "$lib/users";
 
@@ -9,13 +10,17 @@ import { getUser, updateUser } from "$lib/users";
 // The options dictate what type of response that an authenticator device will
 // return back to the server for verification and saving, if successfully verified.
 export const GET: RequestHandler = async (event) => {
-  const user = await getUser();
+  const user = await getUser(event.params.username);
+  if (!user) {
+    throw error(400, "user does not exist");
+  }
   const options = await generateAuthenticationOptions({
     rpID,
     timeout: 60000,
-    allowCredentials: user.devices.map(device => ({
+    // Require users to use a previously registered device
+    allowCredentials: user.devices.map((device) => ({
       id: device.credentialID,
-      type: 'public-key',
+      type: "public-key",
       transports: device.transports,
     })),
     userVerification: "preferred",
@@ -25,11 +30,11 @@ export const GET: RequestHandler = async (event) => {
   // replay attacks. This ensures that when we verify any registration response
   // from the user, we can validate it's for the most recent registration attempt.
   user.currentChallenge = options.challenge;
-  await updateUser(user.id, user);
+  await updateUser(user);
 
   return new Response(JSON.stringify(options), {
     headers: {
-      "content-type": "application/json"
-    }
+      "content-type": "application/json",
+    },
   });
 };

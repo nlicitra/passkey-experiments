@@ -17,11 +17,12 @@ export default {
           username: "string",
         },
         primaryIndex: {
-          partitionKey: "username"
+          partitionKey: "username",
         },
       });
       const site = new SvelteKitSite(stack, "site", {
-        bind: [table]
+        customDomain: "passkey-proto.digi-innovation.pbs.org",
+        bind: [table],
       });
       site.attachPermissions([table]);
       stack.addOutputs({
