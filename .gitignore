@@ -11,3 +11,5 @@ vite.config.ts.timestamp-*
 
 # sst
 .sst
+
+cdk.context.json

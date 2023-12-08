@@ -21,7 +21,10 @@ export default {
         },
       });
       const site = new SvelteKitSite(stack, "site", {
-        customDomain: "passkey-proto.digi-innovation.pbs.org",
+        customDomain: {
+          domainName: "passkey-proto.digi-innovation.pbs.org",
+          hostedZone: "digi-innovation.pbs.org",
+        },
         bind: [table],
       });
       site.attachPermissions([table]);
